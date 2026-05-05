@@ -12,35 +12,41 @@ export default async function handler(req, res) {
   try {
     const { system, userText, imageB64, imageMime, maxTokens } = req.body;
 
-    // Build messages — Groq supports vision via llama-3.2-90b-vision-preview
-    const userContent = [];
+    const messages = [];
+
+    if (system) {
+      messages.push({ role: 'system', content: system });
+    }
 
     if (imageB64) {
-      userContent.push({
-        type: 'image_url',
-        image_url: {
-          url: `data:${imageMime || 'image/jpeg'};base64,${imageB64}`,
-        },
+      // Vision request — use array format with image + text
+      messages.push({
+        role: 'user',
+        content: [
+          {
+            type: 'image_url',
+            image_url: {
+              url: `data:${imageMime || 'image/jpeg'};base64,${imageB64}`,
+            },
+          },
+          {
+            type: 'text',
+            text: userText,
+          },
+        ],
+      });
+    } else {
+      // Text-only request — use simple string format
+      messages.push({
+        role: 'user',
+        content: userText,
       });
     }
 
-    userContent.push({ type: 'text', text: userText });
-
-    const messages = [];
-    if (system) messages.push({ role: 'system', content: system });
-    messages.push({ role: 'user', content: userContent });
-
-    // Use vision model when image is present, fast model otherwise
+    // Vision model for image requests, fast model for text-only
     const model = imageB64
       ? 'meta-llama/llama-4-scout-17b-16e-instruct'
       : 'llama-3.3-70b-versatile';
-
-    const groqBody = {
-      model,
-      messages,
-      max_tokens: maxTokens || 800,
-      temperature: 0.2,
-    };
 
     const upstream = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -48,7 +54,12 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
       },
-      body: JSON.stringify(groqBody),
+      body: JSON.stringify({
+        model,
+        messages,
+        max_tokens: maxTokens || 800,
+        temperature: 0.2,
+      }),
     });
 
     const data = await upstream.json();
