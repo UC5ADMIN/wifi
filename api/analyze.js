@@ -10,40 +10,43 @@ export default async function handler(req, res) {
   if (!apiKey) return res.status(500).json({ error: 'GROQ_API_KEY not configured on server' });
 
   try {
-    const { system, userText, imageB64, imageMime, maxTokens } = req.body;
+    const body = req.body;
+    const system = body.system || '';
+    const userText = body.userText || '';
+    const imageB64 = body.imageB64 || null;
+    const imageMime = body.imageMime || 'image/jpeg';
+    const maxTokens = body.maxTokens || 800;
+
+    // Merge system + user into one combined prompt string
+    const combinedText = system ? `${system}\n\n${userText}` : userText;
 
     const messages = [];
 
-    if (system) {
-      messages.push({ role: 'system', content: system });
-    }
-
     if (imageB64) {
-      // Vision request — use array format with image + text
+      // Vision request — image + text as array
       messages.push({
         role: 'user',
         content: [
           {
             type: 'image_url',
             image_url: {
-              url: `data:${imageMime || 'image/jpeg'};base64,${imageB64}`,
+              url: `data:${imageMime};base64,${imageB64}`,
             },
           },
           {
             type: 'text',
-            text: userText,
+            text: combinedText,
           },
         ],
       });
     } else {
-      // Text-only request — use simple string format
+      // Text-only — plain string, no array
       messages.push({
         role: 'user',
-        content: userText,
+        content: combinedText,
       });
     }
 
-    // Vision model for image requests, fast model for text-only
     const model = imageB64
       ? 'meta-llama/llama-4-scout-17b-16e-instruct'
       : 'llama-3.3-70b-versatile';
@@ -57,7 +60,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model,
         messages,
-        max_tokens: maxTokens || 800,
+        max_tokens: maxTokens,
         temperature: 0.2,
       }),
     });
