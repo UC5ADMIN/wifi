@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HomeSignal — WiFi Advisor</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --ink:#0f0e0c;
+  --paper:#f7f4ef;
+  --cream:#f0ece4;
+  --surface:#e9e5dc;
+  --border:#d8d3c8;
+  --border2:#b8b2a5;
+  --text:#1c1b18;
+  --text2:#5c5850;
+  --text3:#9c9890;
+  --accent:#c84b14;
+  --accent-bg:#fdf0ea;
+  --accent2:#1a56ff;
+  --accent2-bg:#eef2ff;
+  --green:#0a7a42;
+  --green-bg:#e8f5ee;
+  --amber:#a05c00;
+  --amber-bg:#fef3e2;
+  --red:#b83232;
+  --red-bg:#fdecea;
+  --r:12px;
+  --r-sm:7px;
+}
+html,body{min-height:100%;background:var(--paper);color:var(--text);font-family:'Lora',serif;}
+body{background-image:radial-gradient(ellipse at 0% 0%,rgba(200,75,20,.05) 0%,transparent 55%),radial-gradient(ellipse at 100% 100%,rgba(26,86,255,.04) 0%,transparent 55%);}
+.wrap{max-width:720px;margin:0 auto;padding:2rem 1.25rem 6rem;}
+
+/* Brand */
+.brand{display:flex;align-items:center;gap:14px;margin-bottom:2.5rem;padding-bottom:1.5rem;border-bottom:2px solid var(--ink);}
+.brand-mark{width:42px;height:42px;background:var(--ink);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.brand-name{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:-.04em;line-height:1;}
+.brand-sub{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-top:3px;}
+.brand-tag{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--accent);background:var(--accent-bg);border:1px solid rgba(200,75,20,.2);border-radius:4px;padding:3px 10px;letter-spacing:.06em;}
+
+/* Progress */
+.progress{display:flex;align-items:center;margin-bottom:2.5rem;}
+.prog-step{display:flex;align-items:center;gap:8px;flex:1;}
+.prog-num{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border2);background:var(--paper);font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--text3);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .3s;}
+.prog-num.active{border-color:var(--accent);color:var(--accent);background:var(--accent-bg);}
+.prog-num.done{border-color:var(--green);color:#fff;background:var(--green);}
+.prog-label{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:.04em;text-transform:uppercase;transition:color .3s;}
+.prog-label.active{color:var(--text);}
+.prog-line{flex:1;height:1px;background:var(--border);margin:0 4px;transition:background .3s;}
+.prog-line.done{background:var(--green);}
+
+/* Cards */
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:1.5rem;margin-bottom:1rem;}
+.card-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:.4rem;}
+.card-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;letter-spacing:-.03em;margin-bottom:.35rem;line-height:1.2;}
+.card-sub{font-size:13px;color:var(--text2);line-height:1.65;margin-bottom:1.25rem;}
+
+/* Upload */
+.upload-zone{border:1.5px dashed var(--border2);border-radius:var(--r);padding:2.5rem 1rem;text-align:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;background:var(--cream);}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:var(--accent-bg);}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;font-size:0;}
+.up-icon{font-size:2.2rem;margin-bottom:.6rem;}
+.up-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:600;margin-bottom:4px;}
+.up-hint{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3);}
+#previewImg{width:100%;border-radius:var(--r-sm);max-height:260px;object-fit:contain;display:block;border:1px solid var(--border);}
+#previewCanvas{width:100%;border-radius:var(--r-sm);max-height:260px;object-fit:contain;display:none;border:1px solid var(--border);}
+.pdf-nav{display:none;align-items:center;gap:8px;margin-top:8px;padding:8px 10px;background:var(--cream);border-radius:var(--r-sm);border:1px solid var(--border);}
+.pdf-nav.show{display:flex;}
+.pdf-btn{font-size:11px;border:1px solid var(--border2);border-radius:4px;padding:3px 10px;background:#fff;cursor:pointer;color:var(--text2);font-family:'IBM Plex Mono',monospace;}
+.pdf-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent);}
+.pdf-btn:disabled{opacity:.3;cursor:not-allowed;}
+.pdf-info{font-size:11px;color:var(--text2);font-family:'IBM Plex Mono',monospace;}
+.file-meta{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.file-name{font-size:11px;color:var(--text2);font-family:'IBM Plex Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:360px;}
+.chg-btn{margin-left:auto;font-size:11px;border:1px solid var(--border);border-radius:4px;padding:2px 8px;background:none;cursor:pointer;color:var(--text3);}
+.chg-btn:hover{color:var(--text);}
+
+/* Selectors */
+.slabel{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:.5rem;margin-top:1.1rem;}
+.floor-grid{display:flex;gap:6px;margin-bottom:.75rem;}
+.floor-chip{border:1px solid var(--border);border-radius:var(--r-sm);padding:.6rem .5rem;text-align:center;cursor:pointer;background:var(--cream);transition:all .15s;flex:1;}
+.floor-chip:hover{border-color:var(--border2);}
+.floor-chip.sel{border-color:var(--accent);background:var(--accent-bg);}
+.floor-chip-num{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--text2);line-height:1;}
+.floor-chip-lbl{font-size:9px;font-weight:600;color:var(--text3);margin-top:2px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.05em;}
+.floor-chip.sel .floor-chip-num{color:var(--accent);}
+.wall-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.wall-chip{border:1px solid var(--border);border-radius:var(--r-sm);padding:.6rem .75rem;cursor:pointer;background:var(--cream);font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;transition:all .15s;}
+.wall-chip:hover{border-color:var(--border2);}
+.wall-chip.sel{border-color:var(--accent);background:var(--accent-bg);color:var(--accent);}
+.wall-chip .db{font-size:10px;color:var(--text3);margin-left:auto;font-family:'IBM Plex Mono',monospace;}
+
+/* Buttons */
+.btn{border:1px solid var(--border2);border-radius:var(--r-sm);padding:.55rem 1rem;font-size:13px;font-weight:500;cursor:pointer;background:#fff;color:var(--text2);transition:all .15s;font-family:'Lora',serif;}
+.btn:hover{color:var(--text);border-color:var(--ink);}
+.btn:disabled{opacity:.35;cursor:not-allowed;}
+.btn-primary{background:var(--ink);color:#fff;border-color:transparent;font-weight:600;}
+.btn-primary:hover:not(:disabled){background:#2a2820;}
+.btn-primary:disabled{background:var(--surface);color:var(--text3);border-color:var(--border);}
+.btn-sm{padding:.35rem .75rem;font-size:12px;}
+.btn-accent{background:var(--accent);color:#fff;border-color:transparent;}
+.btn-accent:hover:not(:disabled){background:#a83d0e;}
+.actions{display:flex;gap:8px;align-items:center;margin-top:1.25rem;}
+.ml{margin-left:auto;}
+
+/* Device input */
+.device-search-row{display:flex;gap:8px;margin-bottom:1rem;}
+.device-input-wrap{position:relative;flex:1;}
+.device-search-row input{width:100%;border:1px solid var(--border);border-radius:var(--r-sm);padding:.55rem .75rem;font-size:13px;font-family:'Lora',serif;background:#fff;color:var(--text);outline:none;}
+.device-search-row input:focus{border-color:var(--accent);}
+.device-search-row input::placeholder{color:var(--text3);}
+.device-suggestions{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:var(--r-sm);z-index:100;box-shadow:0 4px 20px rgba(0,0,0,.1);max-height:200px;overflow-y:auto;}
+.device-suggestion{padding:.5rem .75rem;font-size:13px;cursor:pointer;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid var(--border);}
+.device-suggestion:last-child{border-bottom:none;}
+.device-suggestion:hover{background:var(--cream);}
+.device-suggestion-name{font-weight:600;color:var(--text);}
+.device-suggestion-meta{font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--text3);}
+
+/* Device cards */
+.device-card{border:1px solid var(--border);border-radius:var(--r);padding:1rem;margin-bottom:8px;background:#fff;display:flex;gap:12px;transition:border-color .2s;}
+.device-card.loaded{border-color:rgba(200,75,20,.15);}
+.device-card-left{flex:1;min-width:0;}
+.device-card-name{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:2px;}
+.confidence-banner{font-size:10px;padding:3px 8px;border-radius:3px;margin-bottom:6px;font-family:'IBM Plex Mono',monospace;display:inline-block;}
+.conf-high{background:var(--green-bg);color:var(--green);}
+.conf-med{background:var(--amber-bg);color:var(--amber);}
+.conf-low{background:var(--red-bg);color:var(--red);}
+.spec-chips{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;}
+.spec-chip{font-size:10px;font-family:'IBM Plex Mono',monospace;padding:2px 7px;border-radius:3px;background:var(--cream);border:1px solid var(--border);color:var(--text2);}
+.spec-chip.hi{background:var(--accent2-bg);border-color:rgba(26,86,255,.2);color:var(--accent2);}
+.spec-chip.ok{background:var(--green-bg);border-color:rgba(10,122,66,.2);color:var(--green);}
+.device-analysis{font-size:12px;color:var(--text2);line-height:1.65;margin-top:6px;padding:8px 10px;background:var(--cream);border-radius:var(--r-sm);border-left:2px solid var(--accent);}
+.device-limitations{font-size:11px;color:var(--amber);margin-top:5px;line-height:1.5;padding:5px 8px;background:var(--amber-bg);border-radius:var(--r-sm);}
+.device-card-right{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;}
+.qty-row{display:flex;align-items:center;gap:6px;}
+.qty-btn{width:26px;height:26px;border-radius:50%;border:1px solid var(--border2);background:var(--cream);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;}
+.qty-btn:hover{border-color:var(--accent);color:var(--accent);}
+.qty-val{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;min-width:18px;text-align:center;}
+.remove-btn{font-size:10px;color:var(--text3);cursor:pointer;border:none;background:none;padding:2px;}
+.remove-btn:hover{color:var(--red);}
+.spin-sm{width:12px;height:12px;border:1.5px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Step 3 */
+.floorplan-wrap{position:relative;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--cream);}
+.floorplan-wrap canvas{display:block;width:100%;cursor:crosshair;}
+.router-baseline-box{border:1.5px solid var(--accent);border-radius:var(--r);padding:1.1rem;margin-bottom:1rem;background:var(--accent-bg);}
+.router-baseline-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--accent);margin-bottom:3px;}
+.router-baseline-sub{font-size:12px;color:rgba(200,75,20,.7);margin-bottom:.75rem;line-height:1.5;}
+.trail-progress-bar{background:var(--cream);border:1px solid var(--border);border-radius:var(--r);padding:.85rem 1rem;margin-bottom:1rem;display:flex;align-items:center;gap:12px;}
+.tpb-label{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);white-space:nowrap;}
+.tpb-track{flex:1;height:7px;background:var(--border);border-radius:4px;overflow:hidden;}
+.tpb-fill{height:100%;border-radius:4px;transition:width .5s ease,background .5s;background:var(--border2);}
+.tpb-badge{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;padding:3px 9px;border-radius:4px;white-space:nowrap;background:var(--cream);color:var(--text3);border:1px solid var(--border);}
+.tpb-badge.done{background:var(--green-bg);color:var(--green);border-color:rgba(10,122,66,.2);}
+.tpb-badge.partial{background:var(--accent-bg);color:var(--accent);border-color:rgba(200,75,20,.2);}
+.wp-list-item{display:flex;align-items:center;gap:10px;padding:.6rem 0;border-bottom:1px solid var(--border);cursor:pointer;}
+.wp-list-item:last-child{border-bottom:none;}
+.wp-dot{width:28px;height:28px;border-radius:50%;background:var(--cream);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:var(--text3);transition:all .2s;}
+.wp-dot.done{background:var(--green);border-color:var(--green);color:#fff;}
+.wp-dot.active{background:var(--accent2);border-color:var(--accent2);color:#fff;}
+.wp-info{flex:1;}
+.wp-name{font-size:13px;font-weight:600;}
+.wp-speed{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--green);margin-top:1px;}
+.wp-speed.pending{color:var(--text3);}
+.active-test-panel{border:1.5px solid var(--accent2);border-radius:var(--r);padding:1rem;margin:.75rem 0;background:var(--accent2-bg);animation:slide-in .2s ease;}
+@keyframes slide-in{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+.atp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;}
+.atp-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--accent2);}
+.atp-sub{font-size:11px;color:rgba(26,86,255,.6);font-family:'IBM Plex Mono',monospace;margin-top:2px;}
+
+/* Loading */
+.loading-wrap{text-align:center;padding:3.5rem 1rem;}
+.spin-big{width:52px;height:52px;border:2.5px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .9s linear infinite;margin:0 auto 1.5rem;}
+.load-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;}
+.load-sub{font-size:12px;color:var(--text3);margin-top:5px;font-family:'IBM Plex Mono',monospace;}
+
+/* Results */
+.result-section-label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:.6rem;}
+.coverage-map-wrap{border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden;background:var(--cream);margin-bottom:1rem;}
+.coverage-map-wrap canvas{display:block;width:100%;}
+.summary-table{width:100%;border-collapse:collapse;font-size:13px;}
+.summary-table th{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);text-align:left;padding:.5rem .75rem;border-bottom:2px solid var(--border);font-weight:600;}
+.summary-table td{padding:.65rem .75rem;border-bottom:1px solid var(--border);vertical-align:middle;}
+.summary-table tr:last-child td{border-bottom:none;}
+.summary-table tr:hover td{background:var(--cream);}
+.speed-pill{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+.sp-great{background:var(--green-bg);color:var(--green);}
+.sp-ok{background:var(--accent2-bg);color:var(--accent2);}
+.sp-weak{background:var(--amber-bg);color:var(--amber);}
+.sp-dead{background:var(--red-bg);color:var(--red);}
+.pct-bar-wrap{display:flex;align-items:center;gap:8px;}
+.pct-bar-bg{width:60px;height:5px;background:var(--border);border-radius:3px;overflow:hidden;flex-shrink:0;}
+.pct-bar-fill{height:100%;border-radius:3px;transition:width .6s ease;}
+.pct-text{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text2);}
+
+/* Dead zones */
+.dead-zone-card{border-left:3px solid var(--red);padding:.85rem 1rem;background:var(--cream);border-radius:0 var(--r-sm) var(--r-sm) 0;margin-bottom:8px;}
+.dead-zone-card.warn{border-left-color:var(--amber);}
+.dz-rank{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:var(--red);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;}
+.dz-rank.warn{color:var(--amber);}
+.dz-area{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:3px;}
+.dz-why{font-size:12px;color:var(--text2);line-height:1.55;margin-bottom:4px;}
+.dz-fix{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3);}
+
+/* Budget tabs */
+.budget-tabs{display:flex;gap:0;border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden;margin-bottom:1.25rem;}
+.budget-tab{flex:1;padding:.6rem .5rem;font-size:12px;font-family:'IBM Plex Mono',monospace;cursor:pointer;background:#fff;color:var(--text3);border:none;border-right:1px solid var(--border);transition:all .15s;text-align:center;line-height:1.4;}
+.budget-tab:last-child{border-right:none;}
+.budget-tab.active{background:var(--ink);color:#fff;}
+.budget-tab:hover:not(.active){background:var(--cream);}
+
+/* Rec cards */
+.rec-card{border:1px solid var(--border);border-radius:var(--r);padding:1.1rem;margin-bottom:10px;background:#fff;position:relative;overflow:hidden;}
+.rec-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--border);}
+.rec-card.priority::before{background:var(--accent);}
+.rec-priority-flag{position:absolute;top:14px;right:12px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;padding:2px 8px;border-radius:3px;background:var(--accent-bg);color:var(--accent);border:1px solid rgba(200,75,20,.2);text-transform:uppercase;letter-spacing:.06em;}
+.rec-action{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:3px;padding-right:80px;}
+.rec-product{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent);margin-bottom:.5rem;}
+.rec-where{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:.4rem;}
+.rec-expected{font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:.6rem;}
+.rec-price-row{display:flex;align-items:center;gap:8px;padding-top:.6rem;border-top:1px solid var(--border);}
+.rec-price-tag{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;color:var(--ink);}
+.rec-price-note{font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;}
+.rec-impact{font-size:11px;color:var(--green);font-family:'IBM Plex Mono',monospace;margin-left:auto;}
+
+/* Score */
+.score-row{display:flex;align-items:center;gap:16px;padding:.5rem 0;}
+.score-number{font-family:'Syne',sans-serif;font-size:52px;font-weight:800;line-height:1;letter-spacing:-.04em;}
+.score-number.great{color:var(--green);}
+.score-number.ok{color:var(--accent2);}
+.score-number.poor{color:var(--amber);}
+.score-number.bad{color:var(--red);}
+.score-label{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:3px;}
+.score-desc{font-size:13px;color:var(--text2);line-height:1.55;}
+
+/* Free fixes */
+.free-fix-item{display:flex;gap:10px;padding:.65rem 0;border-bottom:1px solid var(--border);align-items:flex-start;}
+.free-fix-item:last-child{border-bottom:none;}
+.free-fix-num{width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.free-fix-body{font-size:13px;color:var(--text2);line-height:1.6;}
+.free-fix-body strong{color:var(--text);}
+
+/* Misc */
+.hidden{display:none!important;}
+.err-box{background:var(--red-bg);border:1px solid rgba(184,50,50,.25);border-radius:var(--r-sm);padding:1rem;font-size:13px;color:var(--red);line-height:1.6;}
+@media(max-width:500px){.wall-grid{grid-template-columns:1fr;}.budget-tabs{flex-direction:column;}}
+
+/* Toast */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:12px;padding:.6rem 1.2rem;border-radius:20px;z-index:9000;opacity:0;transition:all .3s;pointer-events:none;font-family:'IBM Plex Mono',monospace;white-space:nowrap;max-width:90vw;text-align:center;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div class="wrap">
+
+<!-- Brand -->
+<div class="brand">
+  <div class="brand-mark">📶</div>
+  <div>
+    <div class="brand-name">HomeSignal</div>
+    <div class="brand-sub">WiFi Advisor</div>
+  </div>
+  <div class="brand-tag">India Edition</div>
+</div>
+
+<!-- Progress -->
+<div class="progress">
+  <div class="prog-step">
+    <div class="prog-num active" id="pn1">1</div>
+    <div class="prog-label active" id="pl1">Home</div>
+    <div class="prog-line" id="pline1"></div>
+  </div>
+  <div class="prog-step">
+    <div class="prog-num" id="pn2">2</div>
+    <div class="prog-label" id="pl2">Devices</div>
+    <div class="prog-line" id="pline2"></div>
+  </div>
+  <div class="prog-step">
+    <div class="prog-num" id="pn3">3</div>
+    <div class="prog-label" id="pl3">Speed Test</div>
+    <div class="prog-line" id="pline3"></div>
+  </div>
+  <div class="prog-step">
+    <div class="prog-num" id="pn4">4</div>
+    <div class="prog-label" id="pl4">Advice</div>
+  </div>
+</div>
+
+<!-- STEP 1 -->
+<div id="step1">
+  <div class="card">
+    <div class="card-eyebrow">Step 1 of 4</div>
+    <div class="card-title">Upload your floor plan</div>
+    <div class="card-sub">A builder blueprint, architect PDF, or a clear photo of your layout. This helps the AI identify your rooms, walls, and understand why signal drops where it does.</div>
+
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="fileInput" accept="image/*,.pdf,application/pdf">
+      <div class="up-icon">🏠</div>
+      <div class="up-title">Click or drag to upload</div>
+      <div class="up-hint">PNG · JPG · WEBP · PDF — up to 15 MB</div>
+    </div>
+
+    <div id="previewWrap" class="hidden" style="margin-top:1rem;">
+      <img id="previewImg" alt="Floor plan">
+      <canvas id="previewCanvas"></canvas>
+      <div class="pdf-nav" id="pdfNav">
+        <button class="pdf-btn" id="btnPrev" onclick="changePage(-1)" disabled>← Prev</button>
+        <span class="pdf-info" id="pdfInfo">Page 1 / 1</span>
+        <button class="pdf-btn" id="btnNext" onclick="changePage(1)" disabled>Next →</button>
+        <span style="font-size:10px;color:var(--text3);margin-left:auto;font-family:'IBM Plex Mono',monospace;">Navigate to your floor plan page</span>
+      </div>
+      <div class="file-meta">
+        <span class="file-name" id="fileName"></span>
+        <button class="chg-btn" onclick="resetUpload()">Change</button>
+      </div>
+    </div>
+
+    <div class="slabel">Number of floors</div>
+    <div class="floor-grid">
+      <div class="floor-chip" onclick="pick(this,'floors',1)"><div class="floor-chip-num">1</div><div class="floor-chip-lbl">Floor</div></div>
+      <div class="floor-chip" onclick="pick(this,'floors',2)"><div class="floor-chip-num">2</div><div class="floor-chip-lbl">Floors</div></div>
+      <div class="floor-chip" onclick="pick(this,'floors',3)"><div class="floor-chip-num">3</div><div class="floor-chip-lbl">Floors</div></div>
+      <div class="floor-chip" onclick="pick(this,'floors',4)"><div class="floor-chip-num">4+</div><div class="floor-chip-lbl">Floors</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:-.2rem;margin-bottom:.75rem;line-height:1.5;font-family:'IBM Plex Mono',monospace;">Multi-floor homes lose ~20 dB through an RCC slab — each floor needs its own device.</div>
+
+    <div class="slabel">Primary wall material</div>
+    <div class="wall-grid">
+      <div class="wall-chip" onclick="pick(this,'wall','RCC Concrete')">🧱 RCC Concrete <span class="db">−12 dB</span></div>
+      <div class="wall-chip" onclick="pick(this,'wall','Brick & Plaster')">🏚️ Brick & Plaster <span class="db">−8 dB</span></div>
+      <div class="wall-chip" onclick="pick(this,'wall','Drywall / Gypsum')">📋 Drywall <span class="db">−4 dB</span></div>
+      <div class="wall-chip" onclick="pick(this,'wall','Glass Partitions')">🪟 Glass <span class="db">−3 dB</span></div>
+    </div>
+  </div>
+  <div class="actions">
+    <span id="s1hint" style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;">Upload plan + choose floors &amp; wall material</span>
+    <button class="btn btn-primary ml" id="s1btn" onclick="goTo(2)" disabled>Add Devices →</button>
+  </div>
+</div>
+
+<!-- STEP 2 -->
+<div id="step2" class="hidden">
+  <div class="card">
+    <div class="card-eyebrow">Step 2 of 4</div>
+    <div class="card-title">Your WiFi devices</div>
+    <div class="card-sub">Type any device name — router brand, ISP model number, or mesh system. The AI identifies the exact product and fetches real specs so it can factor in what you already have when making recommendations.</div>
+
+    <div class="device-search-row">
+      <div class="device-input-wrap">
+        <input type="text" id="deviceInput"
+          placeholder="e.g. Jio Fiber router, TP-Link AX73, Tenda Nova MW6…"
+          onkeydown="if(event.key==='Enter'){hideSuggestions();addDevice();}"
+          oninput="onDeviceInputChange(this.value)"
+          autocomplete="off">
+        <div class="device-suggestions hidden" id="deviceSuggestions"></div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="addDevice()">+ Add</button>
+    </div>
+    <div id="deviceList"></div>
+    <div id="noDevices" style="font-size:12px;color:var(--text3);padding:.5rem 0;font-family:'IBM Plex Mono',monospace;">No devices added yet.</div>
+  </div>
+  <div class="actions">
+    <button class="btn" onclick="goTo(1)">← Back</button>
+    <button class="btn btn-primary ml" id="s2btn" onclick="goTo(3)" disabled>Place &amp; Test →</button>
+  </div>
+</div>
+
+<!-- STEP 3 -->
+<div id="step3" class="hidden">
+
+  <!-- 3A: Pin devices -->
+  <div class="card">
+    <div class="card-eyebrow">Step 3 of 4 — Part A</div>
+    <div class="card-title">Pin your devices on the floor plan</div>
+    <div class="card-sub">Tap the floor plan to place each device. Work through the queue — the prompt shows which device to place next.</div>
+
+    <div id="placementLegend" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:.75rem;"></div>
+    <div class="floorplan-wrap">
+      <canvas id="fpCanvas" onclick="handleMapClick(event)"></canvas>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:.6rem;align-items:center;">
+      <button class="btn btn-sm" onclick="undoPin()">↩ Undo pin</button>
+      <span id="pinStatus" style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;"></span>
+    </div>
+  </div>
+
+  <!-- 3B: Speed trail -->
+  <div class="card">
+    <div class="card-eyebrow">Step 3 of 4 — Part B</div>
+    <div class="card-title">Walk &amp; measure</div>
+    <div class="card-sub">Drop a waypoint in each room or area you care about. Walk to each point, run the test. The AI uses these real measurements — not estimates — for all its recommendations.</div>
+
+    <!-- Router baseline -->
+    <div class="router-baseline-box">
+      <div class="router-baseline-title">Step 1 — Baseline test (stand next to your router)</div>
+      <div class="router-baseline-sub">This becomes your 100% reference. Every other reading will be expressed as a percentage of this.</div>
+      <div id="routerSpeedResult" class="hidden" style="display:flex;align-items:center;gap:12px;padding:.5rem .75rem;background:#fff;border-radius:var(--r-sm);border:1px solid rgba(10,122,66,.2);margin-bottom:.75rem;">
+        <span style="font-size:16px;">✓</span>
+        <div>
+          <div style="font-size:16px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--green);" id="routerSpeedNum">—</div>
+          <div style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;">Router baseline</div>
+        </div>
+        <button class="btn btn-sm" onclick="resetRouterSpeed()" style="margin-left:auto;">Re-test</button>
+      </div>
+      <div id="routerSpeedTesting" class="hidden" style="padding:.4rem 0 .75rem;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <div class="spin-sm"></div>
+          <div style="font-size:12px;color:var(--accent);" id="routerTestStatus">Testing…</div>
+        </div>
+        <div style="background:rgba(200,75,20,.12);border-radius:4px;height:4px;overflow:hidden;">
+          <div id="routerTestProgress" style="height:100%;background:var(--accent);width:0%;transition:width .4s;border-radius:4px;"></div>
+        </div>
+      </div>
+      <button class="btn btn-accent" id="routerTestBtn" onclick="runRouterBaseline()" style="width:100%;">▶ Run baseline test</button>
+    </div>
+
+    <!-- Waypoint drop phase -->
+    <div id="waypointPhase" style="opacity:.4;pointer-events:none;transition:opacity .3s;">
+      <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:.3rem;">Step 2 — Drop waypoints on your floor plan</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:.85rem;">Tap any location on the floor plan below to mark a test point. Aim for one point per room or area.
+        <span id="waypointCount" style="font-family:'IBM Plex Mono',monospace;color:var(--accent);font-weight:600;"></span>
+      </div>
+
+      <div class="floorplan-wrap" style="margin-bottom:.6rem;">
+        <canvas id="waypointCanvas" style="cursor:crosshair;" onclick="addWaypoint(event)"></canvas>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:1rem;">
+        <button class="btn btn-sm" onclick="undoWaypoint()">↩ Undo</button>
+        <button class="btn btn-sm" onclick="clearWaypoints()">✕ Clear all</button>
+        <button class="btn btn-primary btn-sm ml" id="startTrailBtn" onclick="startTrail()" disabled>▶ Start trail →</button>
+      </div>
+    </div>
+
+    <!-- Active trail phase -->
+    <div id="trailPhase" class="hidden">
+      <div class="trail-progress-bar">
+        <span class="tpb-label">Progress</span>
+        <div class="tpb-track"><div class="tpb-fill" id="trailFill" style="width:0%"></div></div>
+        <span class="tpb-badge" id="trailBadge">0 / 0</span>
+      </div>
+
+      <div id="waypointList" style="margin-bottom:.75rem;"></div>
+
+      <div id="activeTestPanel" class="hidden active-test-panel">
+        <div class="atp-header">
+          <div>
+            <div class="atp-title" id="activePointName">Point 1</div>
+            <div class="atp-sub">Walk to this spot on your floor plan, then run the test</div>
+          </div>
+          <button class="btn btn-primary btn-sm" id="runSpeedBtn" onclick="runSpeedTest()">▶ Run test</button>
+        </div>
+        <div id="speedTesting" class="hidden" style="padding:.6rem .85rem;background:rgba(26,86,255,.06);border-radius:var(--r-sm);margin-bottom:.75rem;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <div class="spin-sm" style="border-top-color:var(--accent2);"></div>
+            <div style="font-size:13px;font-weight:600;color:var(--accent2);" id="speedTestStatus">Testing…</div>
+          </div>
+          <div style="background:rgba(26,86,255,.12);border-radius:4px;height:5px;overflow:hidden;">
+            <div id="speedProgress" style="height:100%;background:var(--accent2);width:0%;transition:width .4s;border-radius:4px;"></div>
+          </div>
+          <div style="font-size:11px;color:rgba(26,86,255,.55);margin-top:5px;font-family:'IBM Plex Mono',monospace;" id="speedLiveResult"></div>
+        </div>
+        <div id="speedResultFlash" class="hidden" style="padding:.7rem .85rem;background:var(--green-bg);border:1px solid rgba(10,122,66,.2);border-radius:var(--r-sm);margin-bottom:.75rem;display:flex;align-items:center;gap:12px;">
+          <span style="font-size:18px;">✓</span>
+          <div>
+            <div style="font-size:15px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--green);" id="flashDl">—</div>
+            <div style="font-size:11px;color:var(--text2);" id="flashDetail"></div>
+          </div>
+          <div style="margin-left:auto;font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;" id="flashNextHint"></div>
+        </div>
+      </div>
+      <button class="btn btn-sm" onclick="resetTrail()" style="font-size:11px;color:var(--text3);">↩ Re-place waypoints</button>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn" onclick="goTo(2)">← Back</button>
+    <span id="s3hint" style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;">Log at least one speed test to unlock</span>
+    <button class="btn btn-primary ml" id="s3btn" onclick="runAnalysis()" disabled>Analyse →</button>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="step4loading" class="hidden">
+  <div class="card loading-wrap">
+    <div class="spin-big"></div>
+    <div class="load-title" id="loadTitle">Analysing your floor plan…</div>
+    <div class="load-sub" id="loadSub">Reading room layout and wall positions</div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="step4results" class="hidden">
+
+  <div class="card">
+    <div class="result-section-label">Overall coverage score</div>
+    <div class="score-row">
+      <div class="score-number" id="rScoreNum">—</div>
+      <div>
+        <div class="score-label">Based on <span id="rPointCount">0</span> measured points</div>
+        <div class="score-desc" id="rScoreDesc">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="result-section-label">Signal map</div>
+    <div class="coverage-map-wrap"><canvas id="coverageCanvas"></canvas></div>
+    <div style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin:4px 0 1rem;display:flex;gap:14px;flex-wrap:wrap;">
+      <span>● Green ≥75%</span><span>● Blue 50–74%</span><span>● Amber 25–49%</span><span>● Red &lt;25% of baseline</span>
+    </div>
+    <div class="result-section-label">Speed readings</div>
+    <div style="overflow-x:auto;">
+      <table class="summary-table">
+        <thead><tr><th>#</th><th>Location</th><th>Download</th><th>vs baseline</th><th>Status</th></tr></thead>
+        <tbody id="summaryTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="result-section-label">Dead zones — ranked by severity</div>
+    <div id="deadZonesList"></div>
+  </div>
+
+  <div class="card">
+    <div class="result-section-label">What to buy</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:1rem;line-height:1.6;">Specific product recommendations based on your dead zones, existing devices, and home layout. Pick a budget.</div>
+    <div class="budget-tabs">
+      <button class="budget-tab active" id="tab-budget" onclick="switchBudget('budget')">Budget<br><span style="font-size:10px;opacity:.65;">₹3,000–6,000</span></button>
+      <button class="budget-tab" id="tab-mid" onclick="switchBudget('mid')">Mid-range<br><span style="font-size:10px;opacity:.65;">₹8,000–15,000</span></button>
+      <button class="budget-tab" id="tab-premium" onclick="switchBudget('premium')">Premium<br><span style="font-size:10px;opacity:.65;">₹15,000+</span></button>
+    </div>
+    <div id="recsBudget"></div>
+    <div id="recsMid" class="hidden"></div>
+    <div id="recsPremium" class="hidden"></div>
+  </div>
+
+  <div class="card">
+    <div class="result-section-label">Free fixes — try these first</div>
+    <div id="freeFixesList"></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn" onclick="goTo(3)">← Adjust tests</button>
+    <button class="btn btn-primary ml" onclick="goTo(1)">Start over</button>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+/* ── STATE ── */
+const S = {
+  fileB64:null, fileMime:null, fileName:null,
+  wallType:null, floorCount:null,
+  fpImg:null,
+  pdfDoc:null, pdfPage:1, pdfReady:false,
+  devices:[],
+  routerSpeedMbps:null,
+  speedReadings:[],
+};
+const WP = { points:[], active:null };
+const COLORS = ['#c84b14','#1a56ff','#0a7a42','#7c3aed','#b83232','#0891b2'];
+
+/* ── TOAST ── */
+let _tt=null;
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),3000);}
+
+/* ── PDF.js ── */
+function loadPdfJs(cb){
+  if(S.pdfReady){cb();return;}
+  const sc=document.createElement('script');
+  sc.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+  sc.onload=()=>{pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';S.pdfReady=true;cb();};
+  document.head.appendChild(sc);
+}
+async function renderPdfPage(n){
+  const page=await S.pdfDoc.getPage(n);
+  const vp=page.getViewport({scale:1.6});
+  const cvs=document.getElementById('previewCanvas');
+  cvs.width=vp.width;cvs.height=vp.height;
+  const ctx=cvs.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,vp.width,vp.height);
+  await page.render({canvasContext:ctx,viewport:vp}).promise;
+  S.fileB64=cvs.toDataURL('image/jpeg',0.92).split(',')[1];S.fileMime='image/jpeg';
+  document.getElementById('pdfInfo').textContent=`Page ${n} / ${S.pdfDoc.numPages}`;
+  document.getElementById('btnPrev').disabled=n<=1;
+  document.getElementById('btnNext').disabled=n>=S.pdfDoc.numPages;
+  const blob=await(await fetch(cvs.toDataURL())).blob();
+  S.fpImg=await createImageBitmap(blob);checkS1();
+}
+async function changePage(d){
+  const next=S.pdfPage+d;
+  if(!S.pdfDoc||next<1||next>S.pdfDoc.numPages)return;
+  S.pdfPage=next;await renderPdfPage(S.pdfPage);
+}
+
+/* ── FILE UPLOAD ── */
+(function(){
+  const zone=document.getElementById('uploadZone'),inp=document.getElementById('fileInput');
+  zone.addEventListener('click',e=>{if(e.target===inp)return;e.preventDefault();inp.click();});
+  zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag');});
+  zone.addEventListener('dragleave',()=>zone.classList.remove('drag'));
+  zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('drag');const f=e.dataTransfer?.files?.[0];if(f)processFile(f);});
+  inp.addEventListener('change',e=>{const f=e.target.files?.[0];if(f)processFile(f);});
+})();
+
+function processFile(f){
+  if(f.size>15*1024*1024){alert(`File too large (${(f.size/1048576).toFixed(1)} MB). Please use a file under 15 MB.`);return;}
+  const isPdf=f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf');
+  S.fileName=f.name;
+  document.getElementById('fileName').textContent=f.name;
+  document.getElementById('uploadZone').classList.add('hidden');
+  document.getElementById('previewWrap').classList.remove('hidden');
+  if(isPdf){
+    document.getElementById('previewImg').style.display='none';
+    document.getElementById('previewCanvas').style.display='block';
+    document.getElementById('pdfNav').classList.add('show');
+    const r=new FileReader();
+    r.onload=ev=>{loadPdfJs(async()=>{try{S.pdfDoc=await pdfjsLib.getDocument({data:new Uint8Array(ev.target.result)}).promise;S.pdfPage=1;await renderPdfPage(1);}catch(err){alert('Could not read PDF: '+err.message);resetUpload();}});};
+    r.readAsArrayBuffer(f);
+  }else{
+    document.getElementById('previewImg').style.display='block';
+    document.getElementById('previewCanvas').style.display='none';
+    document.getElementById('pdfNav').classList.remove('show');
+    const r=new FileReader();
+    r.onload=async ev=>{
+      const url=ev.target.result;S.fileB64=url.split(',')[1];S.fileMime=f.type||'image/jpeg';
+      document.getElementById('previewImg').src=url;
+      try{const img=new Image();await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=url;});S.fpImg=await createImageBitmap(img);}
+      catch(e){S.fpImg=document.getElementById('previewImg');}
+      checkS1();
+    };
+    r.onerror=()=>alert('Could not read file.');
+    r.readAsDataURL(f);
+  }
+}
+
+function resetUpload(){
+  S.fileB64=S.fileMime=S.fileName=S.fpImg=S.pdfDoc=null;S.pdfPage=1;
+  document.getElementById('fileInput').value='';
+  document.getElementById('uploadZone').classList.remove('hidden');
+  document.getElementById('previewWrap').classList.add('hidden');
+  document.getElementById('previewImg').style.display='none';
+  document.getElementById('previewCanvas').style.display='none';
+  document.getElementById('pdfNav').classList.remove('show');
+  checkS1();
+}
+
+/* ── STEP 1 ── */
+function pick(el,group,val){
+  document.querySelectorAll(`[onclick*="pick(this,'${group}'"]`).forEach(e=>e.classList.remove('sel'));
+  el.classList.add('sel');
+  if(group==='wall')S.wallType=val;
+  if(group==='floors')S.floorCount=val;
+  checkS1();
+}
+function checkS1(){
+  const ok=!!(S.fileB64&&S.floorCount&&S.wallType);
+  document.getElementById('s1btn').disabled=!ok;
+  document.getElementById('s1hint').style.display=ok?'none':'';
+}
+
+/* ── DEVICE SUGGESTIONS ── */
+const DEVICE_DB=[
+  {name:'TP-Link Archer AX73',meta:'WiFi 6 · AX5400'},
+  {name:'TP-Link Archer AX50',meta:'WiFi 6 · AX3000'},
+  {name:'TP-Link Deco XE75',meta:'WiFi 6E · Mesh'},
+  {name:'TP-Link Deco X50',meta:'WiFi 6 · Mesh'},
+  {name:'TP-Link Deco M5',meta:'WiFi 5 · Mesh'},
+  {name:'Tenda Nova MW6',meta:'WiFi 5 · AC1200 · Mesh'},
+  {name:'Tenda AC21',meta:'WiFi 5 · AC2100'},
+  {name:'Netgear Orbi RBK50',meta:'WiFi 5 · AC3000 · Mesh'},
+  {name:'Asus RT-AX88U',meta:'WiFi 6 · AX6000'},
+  {name:'Asus ZenWiFi AX',meta:'WiFi 6 · Mesh'},
+  {name:'D-Link DIR-878',meta:'WiFi 5 · AC1900'},
+  {name:'Jio Fiber Home Gateway',meta:'FTTH ONT · ISP device'},
+  {name:'Airtel Xstream Box',meta:'FTTH ONT · Dual-band'},
+  {name:'BSNL FTTH ONT',meta:'Optical modem · WiFi 5'},
+  {name:'ACT Wi-Fi Router',meta:'FTTH combo · Dual-band'},
+  {name:'Mi Router 4A Gigabit',meta:'WiFi 5 · AC1200'},
+];
+
+function onDeviceInputChange(val){
+  const box=document.getElementById('deviceSuggestions');
+  if(!val.trim()){box.classList.add('hidden');return;}
+  const q=val.toLowerCase();
+  const hits=DEVICE_DB.filter(d=>d.name.toLowerCase().includes(q)).slice(0,6);
+  if(!hits.length){box.classList.add('hidden');return;}
+  box.innerHTML=hits.map(d=>`<div class="device-suggestion" onclick="selectSuggestion('${d.name.replace(/'/g,"\\'")}')"><div class="device-suggestion-name">${d.name}</div><div class="device-suggestion-meta">${d.meta}</div></div>`).join('');
+  box.classList.remove('hidden');
+}
+function selectSuggestion(name){document.getElementById('deviceInput').value=name;hideSuggestions();addDevice();}
+function hideSuggestions(){document.getElementById('deviceSuggestions').classList.add('hidden');}
+document.addEventListener('click',e=>{if(!e.target.closest('.device-input-wrap'))hideSuggestions();});
+
+/* ── ADD DEVICE ── */
+async function addDevice(){
+  const inp=document.getElementById('deviceInput');
+  const raw=inp.value.trim();if(!raw)return;
+  inp.value='';hideSuggestions();
+  const devId=Date.now();
+  const color=COLORS[S.devices.length%COLORS.length];
+  S.devices.push({id:devId,name:raw,qty:1,color,specs:null,fetching:true,fetchPhase:'Identifying device…',pinned:[]});
+  renderDeviceList();checkS2();
+  try{
+    const result=await fetchDeviceSpecs(devId,raw);
+    const dev=S.devices.find(d=>d.id===devId);
+    if(dev){dev.name=result.name;dev.specs=result.specs;dev.fetching=false;}
+  }catch(err){
+    const dev=S.devices.find(d=>d.id===devId);
+    if(dev){dev.fetching=false;dev.specs={confidence:'low',deviceType:'Router',signalAnalysis:'Could not fetch specs.',limitations:[]};}
+  }
+  renderDeviceList();checkS2();
+}
+
+function setFetchPhase(id,phase){const d=S.devices.find(x=>x.id===id);if(d){d.fetchPhase=phase;renderDeviceList();}}
+
+async function fetchDeviceSpecs(devId,raw){
+  setFetchPhase(devId,'Identifying device…');
+  const r1=await callAPI('',`You are a WiFi device expert. The user typed: "${raw}". Return ONLY valid JSON: {"canonicalName":"<name>","brand":"<brand>","modelNumber":"<model>","deviceType":"Router|Mesh Node|ONT/Gateway|Range Extender|Access Point","confidence":"high|medium|low"}`,null,300,null,false);
+  const resolved=JSON.parse(r1.replace(/```json|```/g,'').trim());
+
+  setFetchPhase(devId,'Fetching specs…');
+  const r2=await callAPI('',`Device: ${resolved.canonicalName} (${resolved.deviceType}). Return ONLY valid JSON: {"wifi":"WiFi 4|WiFi 5|WiFi 6|WiFi 6E|WiFi 7","band":"2.4 GHz|5 GHz|2.4 + 5 GHz|Tri-band|2.4 + 5 + 6 GHz","txPower":<int dBm>,"rangeM":<int metres>,"mu_mimo":"2x2|3x3|4x4|none","beamforming":true|false,"ofdma":true|false,"maxSpeedMbps":<int>,"ethernetPorts":<int>}`,null,400,null,true);
+  const specs=JSON.parse(r2.replace(/```json|```/g,'').trim());
+
+  setFetchPhase(devId,'Analysing for Indian homes…');
+  const r3=await callAPI('',`Device: ${resolved.canonicalName}, ${specs.wifi}, ${specs.band}, ${specs.txPower}dBm. Write a 2-sentence analysis for Indian RCC homes. Return ONLY valid JSON: {"signalAnalysis":"<2 sentences>","limitations":["<l1>","<l2>"],"role":"<one line>"}`,null,300,null,false);
+  const analysis=JSON.parse(r3.replace(/```json|```/g,'').trim());
+
+  return{name:resolved.canonicalName||raw,specs:{...resolved,...specs,...analysis}};
+}
+
+function renderDeviceList(){
+  const list=document.getElementById('deviceList'),empty=document.getElementById('noDevices');
+  if(!S.devices.length){list.innerHTML='';empty.style.display='';return;}
+  empty.style.display='none';
+  list.innerHTML=S.devices.map(d=>{
+    if(d.fetching)return`<div class="device-card"><div style="width:9px;height:9px;border-radius:50%;background:${d.color};flex-shrink:0;margin-top:5px;"></div><div class="device-card-left"><div class="device-card-name">${d.name}</div><div style="display:flex;align-items:center;gap:7px;margin-top:4px;"><div class="spin-sm"></div><span style="font-size:12px;color:var(--text3);font-family:'IBM Plex Mono',monospace;">${d.fetchPhase}</span></div></div></div>`;
+    const sp=d.specs||{};
+    const cc=sp.confidence==='high'?'conf-high':sp.confidence==='medium'?'conf-med':'conf-low';
+    const cl=sp.confidence==='high'?'✓ Verified':'~ Estimated';
+    const wc=sp.wifi==='WiFi 6E'||sp.wifi==='WiFi 7'?'ok':sp.wifi==='WiFi 6'?'hi':'';
+    return`<div class="device-card loaded">
+      <div style="width:9px;height:9px;border-radius:50%;background:${d.color};flex-shrink:0;margin-top:5px;"></div>
+      <div class="device-card-left">
+        <div class="device-card-name">${d.name}</div>
+        <span class="confidence-banner ${cc}">${cl}</span>
+        <div class="spec-chips">
+          ${sp.wifi?`<span class="spec-chip hi ${wc}">${sp.wifi}</span>`:''}
+          ${sp.band?`<span class="spec-chip">${sp.band}</span>`:''}
+          ${sp.txPower?`<span class="spec-chip">${sp.txPower} dBm</span>`:''}
+          ${sp.rangeM?`<span class="spec-chip">~${sp.rangeM}m</span>`:''}
+          ${sp.beamforming?`<span class="spec-chip ok">Beamforming</span>`:''}
+          ${sp.ofdma?`<span class="spec-chip ok">OFDMA</span>`:''}
+        </div>
+        ${sp.signalAnalysis?`<div class="device-analysis">${sp.signalAnalysis}</div>`:''}
+        ${sp.limitations&&sp.limitations.length?`<div class="device-limitations">⚠ ${sp.limitations.join(' · ')}</div>`:''}
+      </div>
+      <div class="device-card-right">
+        <div class="qty-row">
+          <button class="qty-btn" onclick="adjQty(${d.id},-1)">−</button>
+          <span class="qty-val">${d.qty}</span>
+          <button class="qty-btn" onclick="adjQty(${d.id},1)">+</button>
+        </div>
+        <button class="remove-btn" onclick="removeDevice(${d.id})">✕ Remove</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function adjQty(id,d){const dev=S.devices.find(x=>x.id===id);if(dev){dev.qty=Math.max(1,dev.qty+d);renderDeviceList();}}
+function removeDevice(id){S.devices=S.devices.filter(x=>x.id!==id);renderDeviceList();checkS2();}
+function checkS2(){const ok=S.devices.length>0&&S.devices.every(d=>!d.fetching);document.getElementById('s2btn').disabled=!ok;}
+
+/* ── PIN DEVICES ── */
+let pinQueue=[];
+function buildPinQueue(){
+  pinQueue=[];
+  S.devices.forEach(d=>{d.pinned=[];for(let i=0;i<d.qty;i++)pinQueue.push({devId:d.id,unitIdx:i,name:d.qty>1?`${d.name} #${i+1}`:d.name,color:d.color});});
+}
+
+function renderFpCanvas(){
+  const cvs=document.getElementById('fpCanvas');if(!cvs||!S.fpImg)return;
+  const asp=S.fpImg.height/S.fpImg.width;
+  cvs.width=Math.min(S.fpImg.width,1200);cvs.height=Math.round(cvs.width*asp);
+  const W=cvs.width,H=cvs.height,ctx=cvs.getContext('2d');
+  ctx.clearRect(0,0,W,H);ctx.drawImage(S.fpImg,0,0,W,H);
+  S.devices.forEach(d=>(d.pinned||[]).forEach((p,i)=>{if(p)drawPin(ctx,p.x*W,p.y*H,d.color,d.qty>1?`${d.name} ${i+1}`:d.name,W);}));
+  const next=getNextToPin();
+  if(next){
+    const lbl=`Place: ${next.name}`;
+    ctx.font=`600 ${Math.max(11,W*0.012)}px Lora,serif`;
+    const tw=ctx.measureText(lbl).width;
+    ctx.fillStyle='rgba(0,0,0,0.6)';ctx.beginPath();ctx.roundRect(10,10,tw+20,26,4);ctx.fill();
+    ctx.fillStyle='#fff';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(lbl,20,23);
+  }
+  updatePinStatus();
+}
+
+function drawPin(ctx,cx,cy,hex,label,W){
+  const r=Math.max(10,W*0.013),fs=Math.max(10,W*0.012);
+  ctx.shadowColor='rgba(0,0,0,.3)';ctx.shadowBlur=r*0.6;
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=hex;ctx.fill();
+  ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();ctx.shadowBlur=0;
+  ctx.fillStyle='#fff';ctx.font=`700 ${Math.round(fs*0.8)}px IBM Plex Mono,monospace`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('⊙',cx,cy);
+  const sl=label.length>20?label.slice(0,18)+'…':label;
+  ctx.font=`600 ${Math.round(fs)}px Lora,serif`;const tw=ctx.measureText(sl).width;
+  ctx.fillStyle='rgba(255,255,255,0.88)';ctx.beginPath();ctx.roundRect(cx-tw/2-4,cy+r+2,tw+8,fs+6,3);ctx.fill();
+  ctx.fillStyle='#1a1a1a';ctx.textBaseline='top';ctx.fillText(sl,cx,cy+r+4);
+}
+
+function getNextToPin(){
+  for(const e of pinQueue){
+    const dev=S.devices.find(d=>d.id===e.devId);
+    if(!dev)continue;
+    if((dev.pinned||[]).filter(Boolean).length<=e.unitIdx)return e;
+  }return null;
+}
+
+function handleMapClick(e){
+  const cvs=document.getElementById('fpCanvas');
+  const rect=cvs.getBoundingClientRect();
+  const nx=(e.clientX-rect.left)/rect.width,ny=(e.clientY-rect.top)/rect.height;
+  const next=getNextToPin();
+  if(!next){toast('All devices placed ✓');return;}
+  const dev=S.devices.find(d=>d.id===next.devId);
+  if(!dev.pinned)dev.pinned=[];
+  dev.pinned.push({x:nx,y:ny});
+  renderFpCanvas();renderPinLegend();checkS3();
+  if(!getNextToPin())toast('All devices pinned ✓ — now log speed tests below');
+}
+
+function undoPin(){
+  for(let i=pinQueue.length-1;i>=0;i--){
+    const e=pinQueue[i];const dev=S.devices.find(d=>d.id===e.devId);
+    if(dev&&dev.pinned&&dev.pinned.length>0){dev.pinned.pop();renderFpCanvas();renderPinLegend();checkS3();return;}
+  }
+}
+
+function renderPinLegend(){
+  document.getElementById('placementLegend').innerHTML=pinQueue.map(e=>{
+    const dev=S.devices.find(d=>d.id===e.devId);
+    const placed=(dev?.pinned||[]).filter(Boolean).length>e.unitIdx;
+    return`<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:${placed?'var(--green)':'var(--text3)'};">
+      <div style="width:8px;height:8px;border-radius:50%;background:${e.color};"></div>${e.name} ${placed?'✓':'— tap to place'}</div>`;
+  }).join('');
+}
+
+function updatePinStatus(){
+  const total=pinQueue.length;
+  const placed=pinQueue.filter(e=>{const dev=S.devices.find(d=>d.id===e.devId);return(dev?.pinned||[]).filter(Boolean).length>e.unitIdx;}).length;
+  const el=document.getElementById('pinStatus');if(el)el.textContent=`${placed} / ${total} placed`;
+}
+
+function checkS3(){
+  const allPinned=pinQueue.length>0&&!getNextToPin();
+  const hasData=S.speedReadings.length>0&&S.routerSpeedMbps;
+  document.getElementById('s3btn').disabled=!(allPinned&&hasData);
+  const hint=document.getElementById('s3hint');
+  if(hint)hint.style.display=(allPinned&&hasData)?'none':'';
+}
+
+/* ── WAYPOINT CANVAS ── */
+function renderWaypointCanvas(){
+  const cvs=document.getElementById('waypointCanvas');if(!cvs||!S.fpImg)return;
+  const asp=S.fpImg.height/S.fpImg.width;
+  cvs.width=Math.min(S.fpImg.width,1200);cvs.height=Math.round(cvs.width*asp);
+  const W=cvs.width,H=cvs.height,ctx=cvs.getContext('2d');
+  ctx.clearRect(0,0,W,H);ctx.drawImage(S.fpImg,0,0,W,H);
+  // Ghost device pins
+  S.devices.forEach(d=>(d.pinned||[]).forEach(p=>{if(!p)return;ctx.beginPath();ctx.arc(p.x*W,p.y*H,Math.max(7,W*0.009),0,Math.PI*2);ctx.fillStyle=d.color+'88';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();}));
+  // Waypoints
+  WP.points.forEach((p,i)=>{
+    const cx=p.x*W,cy=p.y*H,done=p.readings.length>0,act=WP.active===i;
+    if(act){ctx.beginPath();ctx.arc(cx,cy,18,0,Math.PI*2);ctx.strokeStyle='rgba(26,86,255,.25)';ctx.lineWidth=3;ctx.stroke();}
+    ctx.beginPath();ctx.arc(cx,cy,12,0,Math.PI*2);
+    ctx.fillStyle=done?'#0a7a42':act?'#1a56ff':'#fff';ctx.fill();
+    ctx.strokeStyle=done?'#0a7a42':act?'#1a56ff':'#888';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle=done||act?'#fff':'#333';ctx.font='700 10px IBM Plex Mono,monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(done?'✓':`${i+1}`,cx,cy);
+    if(done){
+      const avg=Math.round(p.readings.reduce((s,r)=>s+r.dl,0)/p.readings.length);
+      const pct=S.routerSpeedMbps?avg/S.routerSpeedMbps:0.7;
+      const rc=Math.round(220*(1-Math.min(pct,1))),gc=Math.round(160*Math.min(pct,1));
+      const lbl=`${avg} Mbps`;ctx.font='600 9px Lora,serif';const tw=ctx.measureText(lbl).width;
+      ctx.fillStyle=`rgba(${rc},${gc},0,0.9)`;ctx.beginPath();ctx.roundRect(cx-tw/2-4,cy+14,tw+8,13,3);ctx.fill();
+      ctx.fillStyle='#fff';ctx.textBaseline='top';ctx.fillText(lbl,cx,cy+15);
+    }
+  });
+}
+
+function addWaypoint(e){
+  if(!S.routerSpeedMbps){toast('Run the router baseline test first ↑');return;}
+  const cvs=document.getElementById('waypointCanvas');const rect=cvs.getBoundingClientRect();
+  WP.points.push({x:(e.clientX-rect.left)/rect.width,y:(e.clientY-rect.top)/rect.height,label:`Point ${WP.points.length+1}`,readings:[]});
+  renderWaypointCanvas();updateWaypointCount();
+  document.getElementById('startTrailBtn').disabled=WP.points.length===0;
+}
+function undoWaypoint(){if(!WP.points.length)return;WP.points.pop();renderWaypointCanvas();updateWaypointCount();document.getElementById('startTrailBtn').disabled=WP.points.length===0;}
+function clearWaypoints(){WP.points=[];WP.active=null;renderWaypointCanvas();updateWaypointCount();document.getElementById('startTrailBtn').disabled=true;document.getElementById('trailPhase').classList.add('hidden');document.getElementById('activeTestPanel').classList.add('hidden');syncReadings();checkS3();}
+function updateWaypointCount(){const n=WP.points.length;const el=document.getElementById('waypointCount');if(el)el.textContent=n>0?` — ${n} point${n>1?'s':''} placed`:'';}
+
+function startTrail(){
+  document.getElementById('trailPhase').classList.remove('hidden');
+  renderWaypointList();updateTrailProgress();
+  const first=WP.points.findIndex(p=>p.readings.length===0);
+  if(first>=0)openWaypoint(first);
+}
+function resetTrail(){WP.active=null;document.getElementById('trailPhase').classList.add('hidden');document.getElementById('activeTestPanel').classList.add('hidden');}
+
+function renderWaypointList(){
+  const el=document.getElementById('waypointList');if(!el)return;
+  el.innerHTML=WP.points.map((p,i)=>{
+    const done=p.readings.length>0,act=WP.active===i;
+    const avg=done?Math.round(p.readings.reduce((s,r)=>s+r.dl,0)/p.readings.length):null;
+    const pct=done&&S.routerSpeedMbps?Math.round(100*avg/S.routerSpeedMbps):null;
+    return`<div class="wp-list-item" onclick="openWaypoint(${i})">
+      <div class="wp-dot ${done?'done':act?'active':''}">${done?'✓':i+1}</div>
+      <div class="wp-info"><div class="wp-name">Point ${i+1}</div>
+        <div class="wp-speed ${done?'':'pending'}">${done?`${avg} Mbps ↓${pct!==null?` · ${pct}% of baseline`:''}`:' Not tested yet'}</div>
+      </div>
+      <button class="btn btn-sm" onclick="event.stopPropagation();deleteWaypoint(${i})" style="font-size:10px;color:var(--text3);">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function deleteWaypoint(i){
+  WP.points.splice(i,1);WP.points.forEach((p,idx)=>{p.label=`Point ${idx+1}`;});
+  if(WP.active===i){WP.active=null;document.getElementById('activeTestPanel').classList.add('hidden');}
+  else if(WP.active>i)WP.active--;
+  renderWaypointCanvas();renderWaypointList();updateTrailProgress();syncReadings();checkS3();
+  document.getElementById('startTrailBtn').disabled=WP.points.length===0;
+}
+
+function openWaypoint(i){
+  WP.active=i;
+  document.getElementById('activePointName').textContent=`Point ${i+1}`;
+  document.getElementById('activeTestPanel').classList.remove('hidden');
+  document.getElementById('speedResultFlash').classList.add('hidden');
+  document.getElementById('speedTesting').classList.add('hidden');
+  document.getElementById('activeTestPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
+  renderWaypointCanvas();renderWaypointList();
+}
+
+function updateTrailProgress(){
+  const done=WP.points.filter(p=>p.readings.length>0).length,total=WP.points.length;
+  const pct=total?Math.round(100*done/total):0;
+  const fill=document.getElementById('trailFill'),badge=document.getElementById('trailBadge');
+  if(fill){fill.style.width=pct+'%';fill.style.background=pct===100?'var(--green)':pct>=50?'var(--accent2)':'var(--amber)';}
+  if(badge){badge.textContent=`${done} / ${total}`;badge.className=`tpb-badge ${pct===100?'done':pct>0?'partial':''}`;}
+  syncReadings();checkS3();
+}
+
+function syncReadings(){
+  S.speedReadings=WP.points.filter(p=>p.readings.length>0).map(p=>({
+    label:p.label,x:p.x,y:p.y,
+    dl:Math.round(p.readings.reduce((s,r)=>s+r.dl,0)/p.readings.length),
+    ul:Math.round(p.readings.reduce((s,r)=>s+r.ul,0)/p.readings.length),
+    ping:Math.round(p.readings.reduce((s,r)=>s+r.ping,0)/p.readings.length),
+  }));
+}
+
+/* ── ROUTER BASELINE ── */
+async function runRouterBaseline(){
+  document.getElementById('routerTestBtn').disabled=true;
+  document.getElementById('routerSpeedTesting').classList.remove('hidden');
+  document.getElementById('routerSpeedResult').classList.add('hidden');
+  const prog=document.getElementById('routerTestProgress'),status=document.getElementById('routerTestStatus');
+  let dl=0;
+  try{
+    status.textContent='Testing download…';prog.style.width='10%';
+    const t=performance.now();
+    await(await fetch('https://speed.cloudflare.com/__down?bytes=25000000',{cache:'no-store'})).arrayBuffer();
+    dl=Math.round((25*8*1000)/(performance.now()-t));prog.style.width='100%';
+  }catch(e){status.textContent='Failed — try again';}
+  document.getElementById('routerSpeedTesting').classList.add('hidden');
+  document.getElementById('routerTestBtn').disabled=false;
+  if(dl>0){
+    S.routerSpeedMbps=dl;
+    document.getElementById('routerSpeedNum').textContent=`${dl} Mbps ↓`;
+    document.getElementById('routerSpeedResult').classList.remove('hidden');
+    document.getElementById('routerTestBtn').style.display='none';
+    const wp=document.getElementById('waypointPhase');if(wp){wp.style.opacity='1';wp.style.pointerEvents='';}
+    checkS3();
+  }
+}
+function resetRouterSpeed(){
+  S.routerSpeedMbps=null;
+  document.getElementById('routerSpeedResult').classList.add('hidden');
+  document.getElementById('routerTestBtn').style.display='';
+  document.getElementById('routerTestBtn').disabled=false;
+  const wp=document.getElementById('waypointPhase');if(wp){wp.style.opacity='0.4';wp.style.pointerEvents='none';}
+  checkS3();
+}
+
+/* ── SPEED TEST ── */
+async function runSpeedTest(){
+  const btn=document.getElementById('runSpeedBtn');btn.disabled=true;
+  document.getElementById('speedTesting').classList.remove('hidden');
+  document.getElementById('speedResultFlash').classList.add('hidden');
+  const prog=document.getElementById('speedProgress'),status=document.getElementById('speedTestStatus'),live=document.getElementById('speedLiveResult');
+  let dl=0,ul=0,ping=0;
+  try{
+    status.textContent='Testing download…';prog.style.width='5%';live.textContent='';
+    const t0=performance.now();
+    await(await fetch('https://speed.cloudflare.com/__down?bytes=25000000',{cache:'no-store'})).arrayBuffer();
+    dl=Math.round((25*8*1000)/(performance.now()-t0));live.textContent=`↓ ${dl} Mbps`;prog.style.width='50%';
+
+    status.textContent='Testing upload…';prog.style.width='55%';
+    const t1=performance.now();
+    await fetch('https://speed.cloudflare.com/__up',{method:'POST',body:new Blob([new Uint8Array(5000000)]),cache:'no-store'}).catch(()=>{});
+    ul=Math.round((5*8*1000)/(performance.now()-t1));live.textContent=`↓ ${dl}  ↑ ${ul} Mbps`;prog.style.width='85%';
+
+    status.textContent='Measuring latency…';
+    const t2=performance.now();await fetch('https://speed.cloudflare.com/__ping',{cache:'no-store'}).catch(()=>{});
+    ping=Math.round(performance.now()-t2);prog.style.width='100%';
+  }catch(e){status.textContent=`Failed: ${e.message}`;}
+  document.getElementById('speedTesting').classList.add('hidden');btn.disabled=false;
+  if(dl>0)saveReading(dl,ul,ping);
+}
+
+function saveReading(dl,ul,ping){
+  if(WP.active===null)return;
+  const p=WP.points[WP.active];p.readings.push({dl,ul,ping});
+  document.getElementById('flashDl').textContent=`${dl} Mbps ↓`;
+  const pct=S.routerSpeedMbps?Math.round(100*dl/S.routerSpeedMbps):null;
+  document.getElementById('flashDetail').textContent=`${ul} Mbps ↑ · ${ping}ms${pct!==null?` · ${pct}% of baseline`:''}`;
+  const next=WP.points.findIndex((wp,i)=>i>WP.active&&wp.readings.length===0);
+  document.getElementById('flashNextHint').textContent=next>=0?`Next: Point ${next+1}`:'✓ All done!';
+  document.getElementById('speedResultFlash').classList.remove('hidden');
+  renderWaypointCanvas();renderWaypointList();updateTrailProgress();
+  const done=WP.points.filter(p=>p.readings.length>0).length;
+  if(done===WP.points.length)toast('🏁 All points logged! Ready to analyse.');
+  else if(done===Math.ceil(WP.points.length/2))toast(`Halfway — ${done} of ${WP.points.length} logged`);
+  if(next>=0)setTimeout(()=>openWaypoint(next),1400);
+}
+
+/* ── NAVIGATION ── */
+function goTo(n){
+  ['step1','step2','step3','step4loading','step4results'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.add('hidden');});
+  if(n===1)document.getElementById('step1').classList.remove('hidden');
+  else if(n===2)document.getElementById('step2').classList.remove('hidden');
+  else if(n===3){
+    document.getElementById('step3').classList.remove('hidden');
+    buildPinQueue();
+    setTimeout(()=>{renderFpCanvas();renderPinLegend();renderWaypointCanvas();},50);
+    if(S.routerSpeedMbps){
+      document.getElementById('routerSpeedNum').textContent=`${S.routerSpeedMbps} Mbps ↓`;
+      document.getElementById('routerSpeedResult').classList.remove('hidden');
+      document.getElementById('routerTestBtn').style.display='none';
+      const wp=document.getElementById('waypointPhase');if(wp){wp.style.opacity='1';wp.style.pointerEvents='';}
+    }
+    checkS3();
+  }
+  const pm={1:1,2:2,3:3};const pn=pm[n]||4;
+  [1,2,3,4].forEach(i=>{
+    const dot=document.getElementById('pn'+i),lbl=document.getElementById('pl'+i),line=document.getElementById('pline'+i);
+    if(dot){dot.classList.toggle('active',i===pn);dot.classList.toggle('done',i<pn);}
+    if(lbl)lbl.classList.toggle('active',i===pn);
+    if(line&&i<4)line.classList.toggle('done',i<pn);
+  });
+  window.scrollTo(0,0);
+}
+
+/* ── ANALYSIS ── */
+async function runAnalysis(){
+  const measured=S.speedReadings||[];
+  if(!measured.length||!S.routerSpeedMbps){alert('Please log at least one waypoint speed test and a router baseline before analysing.');return;}
+
+  ['step1','step2','step3','step4results'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.add('hidden');});
+  document.getElementById('step4loading').classList.remove('hidden');
+  [1,2,3,4].forEach(i=>{
+    const dot=document.getElementById('pn'+i),lbl=document.getElementById('pl'+i),line=document.getElementById('pline'+i);
+    if(dot){dot.classList.toggle('active',i===4);dot.classList.toggle('done',i<4);}
+    if(lbl)lbl.classList.toggle('active',i===4);
+    if(line&&i<4)line.classList.toggle('done',i<4);
+  });
+  window.scrollTo(0,0);
+
+  const msgs=[
+    ['Analysing your floor plan…','Identifying rooms and wall positions'],
+    ['Reading speed measurements…','Mapping signal strength across your home'],
+    ['Finding dead zones…','Comparing readings against your baseline'],
+    ['Building recommendations…','Sourcing India-specific products and prices'],
+  ];
+  let mi=0;
+  const iv=setInterval(()=>{mi=(mi+1)%msgs.length;document.getElementById('loadTitle').textContent=msgs[mi][0];document.getElementById('loadSub').textContent=msgs[mi][1];},2800);
+
+  const devSummary=S.devices.flatMap(d=>(d.pinned||[]).filter(Boolean).map((pin,i)=>({
+    name:d.qty>1?`${d.name} #${i+1}`:d.name,specs:d.specs,
+    pin_x:Math.round(pin.x*1000)/1000,pin_y:Math.round(pin.y*1000)/1000,color:d.color
+  })));
+
+  const wallLoss={'RCC Concrete':12,'Brick & Plaster':8,'Drywall / Gypsum':4,'Glass Partitions':3}[S.wallType]||8;
+  const mSummary=measured.map((m,i)=>`Point ${i+1}: ${m.dl}↓ Mbps, ${m.ul}↑ Mbps, ${m.ping}ms — ${Math.round(100*m.dl/S.routerSpeedMbps)}% of baseline`).join('\n');
+
+  const systemPrompt=`You are a WiFi expert for Indian homes. You have real speed test data and a floor plan image.
+
+Give SPECIFIC, ACTIONABLE advice:
+- Name rooms using labels VISIBLE in the floor plan image
+- Base dead zones on MEASURED data (low % of baseline = weak signal)  
+- Recommend specific products sold in India with ₹ prices
+- Give exact placement location (room name from floor plan)
+
+Respond ONLY with valid JSON (no markdown, no backticks):
+{
+  "layout_summary": "<2-sentence description of the floor plan>",
+  "dead_zones": [
+    {
+      "area": "<room/area name from floor plan>",
+      "severity": "critical|high|moderate",
+      "measured_pct": <int % of baseline, or null>,
+      "why": "<specific reason>",
+      "fix": "<one specific action>"
+    }
+  ],
+  "recommendations": {
+    "budget": [
+      {
+        "action": "<what to do>",
+        "product": "<specific product name>",
+        "price_inr": "<e.g. ₹3,499>",
+        "where_to_place": "<exact room from floor plan>",
+        "why": "<how this fixes the problem>",
+        "estimated_improvement": "<e.g. bedroom signal from ~20% to ~70% of baseline>",
+        "priority": true|false
+      }
+    ],
+    "mid": [],
+    "premium": []
+  },
+  "free_fixes": [
+    { "title": "<short title>", "detail": "<specific instruction>" }
+  ],
+  "coverage_assessment": "<2-sentence assessment citing the measured data>"
+}`;
+
+  const userText=`Home: ${S.floorCount} floor${S.floorCount>1?'s':''} | Wall: ${S.wallType} (${wallLoss} dB/wall)
+Router baseline: ${S.routerSpeedMbps} Mbps
+
+Speed measurements (${measured.length} points):
+${mSummary}
+
+Existing devices:
+${devSummary.map(d=>`- ${d.name} (${d.specs?.deviceType||'Router'}) at floor plan position (${d.pin_x}, ${d.pin_y})`).join('\n')}`;
+
+  try{
+    const raw=await callAPI(systemPrompt,userText,S.fileB64,1800,S.fileMime,false);
+    clearInterval(iv);
+    const result=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    renderResults(result,devSummary);
+  }catch(err){
+    clearInterval(iv);
+    document.getElementById('step4loading').innerHTML=`<div class="card"><div class="err-box"><strong>Analysis failed:</strong> ${err.message}<br><br><small>Make sure the app is served over HTTPS (Vercel) and GROQ_API_KEY is set.</small><br><br><button class="btn btn-sm" onclick="goTo(3)" style="margin-top:8px;">← Go back</button></div></div>`;
+  }
+}
+
+/* ── RENDER RESULTS ── */
+function renderResults(r,devSummary){
+  document.getElementById('step4loading').classList.add('hidden');
+  document.getElementById('step4results').classList.remove('hidden');
+  window.scrollTo(0,0);
+
+  // Score
+  const measured=S.speedReadings;
+  const avg=measured.reduce((s,m)=>s+Math.min(m.dl/S.routerSpeedMbps,1),0)/measured.length;
+  const score=Math.round(avg*100);
+  const sEl=document.getElementById('rScoreNum');
+  sEl.textContent=score+'%';
+  sEl.className='score-number '+(score>=75?'great':score>=50?'ok':score>=30?'poor':'bad');
+  document.getElementById('rPointCount').textContent=measured.length;
+  document.getElementById('rScoreDesc').textContent=r.coverage_assessment||(score>=75?'Strong coverage across all tested areas.':score>=50?'Moderate coverage — some areas need improvement.':'Significant dead zones detected — action needed.');
+
+  // Coverage map
+  drawCoverageMap(devSummary);
+
+  // Table
+  document.getElementById('summaryTableBody').innerHTML=measured.map((m,i)=>{
+    const pct=Math.round(100*m.dl/S.routerSpeedMbps);
+    const [pc,st]=pct>=75?['sp-great','Excellent']:pct>=50?['sp-ok','Good']:pct>=25?['sp-weak','Weak']:['sp-dead','Dead zone'];
+    const bc=pct>=75?'var(--green)':pct>=50?'var(--accent2)':pct>=25?'var(--amber)':'var(--red)';
+    return`<tr><td style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--text3);">${i+1}</td>
+      <td style="font-weight:500;">Point ${i+1}</td>
+      <td><span class="speed-pill ${pc}">${m.dl} Mbps</span></td>
+      <td><div class="pct-bar-wrap"><div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${Math.min(pct,100)}%;background:${bc};"></div></div><span class="pct-text">${pct}%</span></div></td>
+      <td style="font-size:12px;color:var(--text2);">${st}</td></tr>`;
+  }).join('');
+
+  // Dead zones
+  const zones=r.dead_zones||[];
+  document.getElementById('deadZonesList').innerHTML=!zones.length
+    ?`<div style="font-size:13px;color:var(--green);font-family:'IBM Plex Mono',monospace;">✓ No significant dead zones detected.</div>`
+    :zones.map((dz,i)=>{
+      const crit=dz.severity==='critical'||dz.severity==='high';
+      return`<div class="dead-zone-card ${crit?'':'warn'}">
+        <div class="dz-rank ${crit?'':'warn'}">${i+1}. ${(dz.severity||'HIGH').toUpperCase()}</div>
+        <div class="dz-area">${dz.area}</div>
+        <div class="dz-why">${dz.why}</div>
+        <div class="dz-fix">${dz.measured_pct!=null?`Measured: ${dz.measured_pct}% of baseline · `:''}Fix: ${dz.fix}</div>
+      </div>`;
+    }).join('');
+
+  // Recs
+  ['budget','mid','premium'].forEach(tier=>{
+    const recs=(r.recommendations?.[tier]||[]);
+    const key='recs'+tier.charAt(0).toUpperCase()+tier.slice(1);
+    document.getElementById(key).innerHTML=recs.length
+      ?recs.map(rec=>`<div class="rec-card ${rec.priority?'priority':''}">
+          ${rec.priority?'<div class="rec-priority-flag">Top pick</div>':''}
+          <div class="rec-action">${rec.action}</div>
+          <div class="rec-product">→ ${rec.product}</div>
+          <div class="rec-where">📍 <strong>${rec.where_to_place}</strong> — ${rec.why}</div>
+          ${rec.estimated_improvement?`<div class="rec-expected">Expected: ${rec.estimated_improvement}</div>`:''}
+          <div class="rec-price-row">
+            <span class="rec-price-tag">${rec.price_inr}</span>
+            <span class="rec-price-note">approx. India market price</span>
+            <span class="rec-impact">↑ Fixes dead zone</span>
+          </div>
+        </div>`).join('')
+      :`<div style="font-size:13px;color:var(--text3);padding:.5rem 0;font-family:'IBM Plex Mono',monospace;">No ${tier}-range recommendations for your setup.</div>`;
+  });
+
+  // Free fixes
+  const ff=r.free_fixes||[];
+  document.getElementById('freeFixesList').innerHTML=ff.length
+    ?ff.map((f,i)=>`<div class="free-fix-item"><div class="free-fix-num">${i+1}</div><div class="free-fix-body"><strong>${f.title}</strong> — ${f.detail}</div></div>`).join('')
+    :`<div style="font-size:13px;color:var(--text3);font-family:'IBM Plex Mono',monospace;">No free fixes identified for your setup.</div>`;
+}
+
+/* ── COVERAGE MAP ── */
+function drawCoverageMap(devSummary){
+  const cvs=document.getElementById('coverageCanvas');if(!cvs||!S.fpImg)return;
+  const asp=S.fpImg.height/S.fpImg.width;
+  cvs.width=Math.min(S.fpImg.width,1200);cvs.height=Math.round(cvs.width*asp);
+  const W=cvs.width,H=cvs.height,ctx=cvs.getContext('2d');
+  ctx.clearRect(0,0,W,H);ctx.drawImage(S.fpImg,0,0,W,H);
+
+  // Device pins
+  (devSummary||[]).forEach(d=>drawPin(ctx,d.pin_x*W,d.pin_y*H,d.color,d.name,W));
+
+  // Waypoint dots
+  const pr=Math.max(14,W*0.018),fs=Math.max(10,W*0.012);
+  S.speedReadings.forEach((m,i)=>{
+    const cx=m.x*W,cy=m.y*H,pct=S.routerSpeedMbps?m.dl/S.routerSpeedMbps:0.5;
+    const col=pct>=0.75?'#0a7a42':pct>=0.50?'#1a56ff':pct>=0.25?'#a05c00':'#b83232';
+    ctx.beginPath();ctx.arc(cx,cy,pr+4,0,Math.PI*2);ctx.strokeStyle=col+'40';ctx.lineWidth=3;ctx.stroke();
+    ctx.beginPath();ctx.arc(cx,cy,pr,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2.5;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font=`700 ${Math.round(fs)}px IBM Plex Mono,monospace`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(i+1,cx,cy);
+    const lbl=`${m.dl} Mbps`;ctx.font=`600 ${Math.round(fs*0.9)}px IBM Plex Mono,monospace`;const tw=ctx.measureText(lbl).width;
+    ctx.fillStyle='rgba(0,0,0,0.75)';ctx.beginPath();ctx.roundRect(cx-tw/2-5,cy+pr+4,tw+10,fs+6,3);ctx.fill();
+    ctx.fillStyle='#fff';ctx.textBaseline='top';ctx.fillText(lbl,cx,cy+pr+6);
+  });
+}
+
+function switchBudget(tier){
+  ['budget','mid','premium'].forEach(t=>{
+    document.getElementById('tab-'+t).classList.toggle('active',t===tier);
+    document.getElementById('recs'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('hidden',t!==tier);
+  });
+}
+
+/* ── API ── */
+async function callAPI(system,userText,imageB64,maxTokens,imageMime,useSearch){
+  const resp=await fetch('/api/analyze',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({system,userText,imageB64,imageMime,maxTokens,useSearch:!!useSearch})
+  });
+  if(!resp.ok){const err=await resp.json().catch(()=>({error:{message:resp.statusText}}));throw new Error(err.error?.message||resp.statusText);}
+  const data=await resp.json();if(data.error)throw new Error(data.error);
+  return data.text||'';
+}
+</script>
+</body>
+</html>
