@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Staff Attendance</title>
+<style>
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --card: #21253a; --border: rgba(255,255,255,0.08);
+    --accent: #4f8ef7; --accent-dim: rgba(79,142,247,0.12);
+    --green: #2ecc8f; --green-dim: rgba(46,204,143,0.12);
+    --red: #e05c5c; --red-dim: rgba(224,92,92,0.12);
+    --text: #f0f2ff; --muted: #8891b0; --font: 'Segoe UI', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+  .shell { width: 100%; max-width: 420px; }
+  .logo-area { text-align: center; margin-bottom: 2rem; }
+  .store-icon { width: 56px; height: 56px; background: var(--accent-dim); border: 1.5px solid var(--accent); border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.75rem; }
+  .store-icon svg { width: 28px; height: 28px; stroke: var(--accent); }
+  h1 { font-size: 1.3rem; font-weight: 600; letter-spacing: -0.01em; }
+  .subtitle { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 1.5rem; margin-bottom: 1rem; }
+  label { display: block; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+  select { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 1rem; padding: 0.75rem 1rem; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238891b0' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; cursor: pointer; font-family: var(--font); }
+  select:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  .pin-dots { display: flex; gap: 12px; justify-content: center; margin: 1.25rem 0; }
+  .pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--muted); background: transparent; transition: background 0.15s, border-color 0.15s; }
+  .pin-dot.filled { background: var(--accent); border-color: var(--accent); }
+  .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 0.5rem; }
+  .num-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-size: 1.4rem; font-weight: 500; height: 62px; cursor: pointer; font-family: var(--font); transition: background 0.1s, transform 0.08s; user-select: none; }
+  .num-btn:active { background: var(--accent-dim); transform: scale(0.95); }
+  .num-btn.del { font-size: 1rem; color: var(--muted); }
+  .action-btn { width: 100%; padding: 1rem; border-radius: 12px; border: none; font-size: 1rem; font-weight: 600; font-family: var(--font); cursor: pointer; margin-top: 0.75rem; transition: opacity 0.15s, transform 0.1s; letter-spacing: 0.01em; }
+  .action-btn:active { transform: scale(0.98); opacity: 0.85; }
+  .btn-clock-in { background: var(--green); color: #0a2a1e; }
+  .btn-clock-out { background: var(--red); color: #2a0a0a; }
+  .btn-verify { background: var(--accent); color: #fff; }
+  .status-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 600; padding: 4px 10px; border-radius: 20px; margin-top: 0.4rem; }
+  .status-in { background: var(--green-dim); color: var(--green); }
+  .status-out { background: rgba(136,145,176,0.12); color: var(--muted); }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .info-row { display: flex; justify-content: space-between; font-size: 0.82rem; padding: 0.4rem 0; border-bottom: 1px solid var(--border); }
+  .info-row:last-child { border-bottom: none; }
+  .info-key { color: var(--muted); } .info-val { font-weight: 500; }
+  .alert { padding: 0.75rem 1rem; border-radius: 10px; font-size: 0.85rem; font-weight: 500; text-align: center; margin-top: 0.75rem; }
+  .alert-err { background: var(--red-dim); color: var(--red); }
+  .alert-ok { background: var(--green-dim); color: var(--green); }
+  .time-display { text-align: center; margin-bottom: 1.25rem; }
+  .time-display .time { font-size: 2.5rem; font-weight: 300; letter-spacing: -0.02em; }
+  .time-display .date { font-size: 0.82rem; color: var(--muted); margin-top: 2px; }
+  .blocked-screen { text-align: center; padding: 2rem 1rem; }
+  .blocked-icon { width: 64px; height: 64px; background: var(--red-dim); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1rem; }
+  .hidden { display: none !important; }
+  .greeting { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; }
+  .greeting-sub { font-size: 0.82rem; color: var(--muted); }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .back-link { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--muted); cursor: pointer; margin-bottom: 1rem; user-select: none; }
+  .back-link:hover { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="logo-area">
+    <div class="store-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l1-5h16l1 5"/>
+        <path d="M3 9a2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0 2 2 2 2 0 0 0 2-2"/>
+        <path d="M5 20V11M19 20V11"/>
+        <rect x="9" y="13" width="6" height="7" rx="1"/>
+      </svg>
+    </div>
+    <h1>Staff Attendance</h1>
+    <div class="subtitle" id="clock-subtitle">Loading...</div>
+  </div>
+
+  <!-- BLOCKED -->
+  <div id="screen-blocked" class="hidden">
+    <div class="card">
+      <div class="blocked-screen">
+        <div class="blocked-icon">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#e05c5c" stroke-width="1.8" stroke-linecap="round">
+            <circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+          </svg>
+        </div>
+        <div style="font-size:1rem;font-weight:600;margin-bottom:0.5rem">Access Restricted</div>
+        <div style="font-size:0.82rem;color:var(--muted);line-height:1.6">This app can only be used on the store WiFi.<br><br>Please connect and try again.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div id="screen-select" class="hidden">
+    <div class="card">
+      <div class="time-display">
+        <div class="time" id="live-time">--:--</div>
+        <div class="date" id="live-date">--</div>
+      </div>
+      <label>Who are you?</label>
+      <select id="staff-select"><option value="">— Select your name —</option></select>
+      <button class="action-btn btn-verify" style="margin-top:1rem" onclick="goToPin()">Continue →</button>
+      <div id="select-alert" class="hidden"></div>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div id="screen-pin" class="hidden">
+    <div class="back-link" onclick="goBack()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      Back
+    </div>
+    <div class="card">
+      <div class="greeting" id="pin-greeting">Hello!</div>
+      <div class="greeting-sub">Enter your 4-digit PIN</div>
+      <div class="pin-dots">
+        <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
+        <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
+      </div>
+      <div class="numpad">
+        <button class="num-btn" onclick="pinPress('1')">1</button>
+        <button class="num-btn" onclick="pinPress('2')">2</button>
+        <button class="num-btn" onclick="pinPress('3')">3</button>
+        <button class="num-btn" onclick="pinPress('4')">4</button>
+        <button class="num-btn" onclick="pinPress('5')">5</button>
+        <button class="num-btn" onclick="pinPress('6')">6</button>
+        <button class="num-btn" onclick="pinPress('7')">7</button>
+        <button class="num-btn" onclick="pinPress('8')">8</button>
+        <button class="num-btn" onclick="pinPress('9')">9</button>
+        <button class="num-btn" onclick="pinPress('0')" style="grid-column:2">0</button>
+        <button class="num-btn del" onclick="pinDel()">⌫</button>
+      </div>
+      <div id="pin-alert" class="hidden"></div>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div id="screen-action" class="hidden">
+    <div class="back-link" onclick="goBack()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      Not you?
+    </div>
+    <div class="card">
+      <div class="time-display">
+        <div class="time" id="live-time2">--:--</div>
+        <div class="date" id="live-date2">--</div>
+      </div>
+      <div style="margin-bottom:1rem">
+        <div style="font-size:1.1rem;font-weight:600" id="action-name">--</div>
+        <div id="action-status"></div>
+      </div>
+      <hr class="divider">
+      <div id="today-summary" style="margin-bottom:0.75rem"></div>
+      <button id="btn-in" class="action-btn btn-clock-in hidden" onclick="doClockIn()">🟢 Clock In</button>
+      <button id="btn-out" class="action-btn btn-clock-out hidden" onclick="doClockOut()">🔴 Clock Out</button>
+      <div id="action-alert" class="hidden"></div>
+      <div id="already-done" class="hidden" style="text-align:center;padding:0.5rem 0;font-size:0.85rem;color:var(--muted)"></div>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div id="screen-loading" class="hidden">
+    <div class="card" style="text-align:center;padding:2rem">
+      <div class="spinner"></div> Connecting...
+    </div>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwwDSOnBWQuPwfsta5eObxZ-Lg3lTt-6SeX_bZO6vpTKjCZqPow3Ma5P5Zv30DSZ_D0/exec";
+const ALLOWED_IP = ""; // Paste your store public IP here when ready, e.g. "103.45.67.89"
+
+let staffList = [], selectedStaff = null, enteredPin = "";
+let todayLog = { inTime: "", outTime: "" };
+
+// Clock
+function updateClock() {
+  const now = new Date();
+  const t = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+  const d = now.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  ["live-time","live-time2"].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = t; });
+  ["live-date","live-date2"].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = d; });
+  document.getElementById("clock-subtitle").textContent = t + " · " + now.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// Screens
+const SCREENS = ["screen-blocked","screen-select","screen-pin","screen-action","screen-loading"];
+function show(id) { SCREENS.forEach(s => document.getElementById(s).classList.add("hidden")); document.getElementById(id).classList.remove("hidden"); }
+function goBack() { enteredPin = ""; show("screen-select"); }
+
+// Date: DD/MM/YYYY — plain text, safe for sheet comparison
+function getTodayStr() {
+  const n = new Date();
+  return String(n.getDate()).padStart(2,"0") + "/" + String(n.getMonth()+1).padStart(2,"0") + "/" + n.getFullYear();
+}
+
+function formatTime(d) {
+  return d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
+}
+
+function calcDuration(inT, outT) {
+  try {
+    const parse = t => {
+      const parts = t.trim().split(" ");
+      const ampm = (parts[1] || "").toUpperCase();
+      let [h, m, s] = parts[0].split(":").map(Number);
+      if (ampm === "PM" && h !== 12) h += 12;
+      if (ampm === "AM" && h === 12) h = 0;
+      return h * 3600 + m * 60 + (s || 0);
+    };
+    const diff = parse(outT) - parse(inT);
+    if (diff < 0) return "—";
+    return Math.floor(diff/3600) + "h " + Math.floor((diff%3600)/60) + "m";
+  } catch { return "—"; }
+}
+
+// Init
+async function init() {
+  show("screen-loading");
+  try {
+    if (ALLOWED_IP) {
+      const ipData = await fetch("https://api.ipify.org?format=json").then(r => r.json());
+      if (ipData.ip !== ALLOWED_IP) { show("screen-blocked"); return; }
+    }
+    const data = await fetch(SCRIPT_URL + "?action=getStaff").then(r => r.json());
+    if (!data.success) throw new Error(data.error || "Failed");
+    staffList = data.staff;
+    const sel = document.getElementById("staff-select");
+    sel.innerHTML = "<option value=''>— Select your name —</option>";
+    staffList.forEach((s, i) => {
+      const opt = document.createElement("option");
+      opt.value = i; opt.textContent = s.name; sel.appendChild(opt);
+    });
+    show("screen-select");
+  } catch (e) {
+    showAlert("select-alert", "Could not load staff. Check connection.", "err");
+    show("screen-select");
+  }
+}
+
+// Step 1 → 2
+function goToPin() {
+  const sel = document.getElementById("staff-select");
+  if (sel.value === "") { showAlert("select-alert", "Please select your name first.", "err"); return; }
+  clearAlert("select-alert");
+  selectedStaff = staffList[parseInt(sel.value)];
+  enteredPin = ""; updateDots(); clearAlert("pin-alert");
+  document.getElementById("pin-greeting").textContent = "Hello, " + selectedStaff.name.split(" ")[0] + "!";
+  show("screen-pin");
+}
+
+// PIN
+function pinPress(d) {
+  if (enteredPin.length >= 4) return;
+  enteredPin += d; updateDots();
+  if (enteredPin.length === 4) setTimeout(verifyPin, 120);
+}
+function pinDel() { enteredPin = enteredPin.slice(0,-1); updateDots(); }
+function updateDots() { for (let i=0;i<4;i++) document.getElementById("d"+i).classList.toggle("filled", i < enteredPin.length); }
+
+async function verifyPin() {
+  if (enteredPin !== String(selectedStaff.pin)) {
+    showAlert("pin-alert", "Incorrect PIN. Try again.", "err");
+    enteredPin = ""; updateDots(); return;
+  }
+  clearAlert("pin-alert");
+  await loadActionScreen();
+}
+
+// Step 2 → 3: fetch status
+async function loadActionScreen() {
+  show("screen-loading");
+  try {
+    const today = getTodayStr();
+    const data = await fetch(SCRIPT_URL + "?action=getToday&name=" + encodeURIComponent(selectedStaff.name) + "&date=" + encodeURIComponent(today)).then(r => r.json());
+    todayLog = (data.success && data.log) ? { inTime: data.log.inTime || "", outTime: data.log.outTime || "" } : { inTime: "", outTime: "" };
+  } catch { todayLog = { inTime: "", outTime: "" }; }
+  renderActionScreen();
+  show("screen-action");
+}
+
+// Render
+function renderActionScreen() {
+  document.getElementById("action-name").textContent = selectedStaff.name;
+  const btnIn = document.getElementById("btn-in"), btnOut = document.getElementById("btn-out");
+  const done = document.getElementById("already-done"), sumDiv = document.getElementById("today-summary");
+  const status = document.getElementById("action-status");
+  btnIn.classList.add("hidden"); btnOut.classList.add("hidden"); done.classList.add("hidden");
+  clearAlert("action-alert");
+  const inT = todayLog.inTime.trim(), outT = todayLog.outTime.trim();
+  if (!inT) {
+    status.innerHTML = '<span class="status-badge status-out"><span class="status-dot"></span>Not clocked in</span>';
+    sumDiv.innerHTML = ""; btnIn.classList.remove("hidden");
+  } else if (!outT) {
+    status.innerHTML = '<span class="status-badge status-in"><span class="status-dot"></span>Currently clocked in</span>';
+    sumDiv.innerHTML = infoRow("Clock In", inT); btnOut.classList.remove("hidden");
+  } else {
+    status.innerHTML = '<span class="status-badge status-out"><span class="status-dot"></span>Shift complete</span>';
+    sumDiv.innerHTML = infoRow("Clock In", inT) + infoRow("Clock Out", outT) + infoRow("Duration", calcDuration(inT, outT));
+    done.textContent = "✓ Today's attendance is complete."; done.classList.remove("hidden");
+  }
+}
+function infoRow(k,v) { return '<div class="info-row"><span class="info-key">'+k+'</span><span class="info-val">'+v+'</span></div>'; }
+
+// Clock In
+async function doClockIn() {
+  setLoading("btn-in", true);
+  try {
+    const now = new Date(), time = formatTime(now), date = getTodayStr();
+    const data = await fetch(SCRIPT_URL + "?action=clockIn&name=" + encodeURIComponent(selectedStaff.name) + "&date=" + encodeURIComponent(date) + "&time=" + encodeURIComponent(time)).then(r => r.json());
+    if (!data.success) {
+      if (data.error === "ALREADY_CLOCKED_IN") { await loadActionScreen(); return; }
+      throw new Error(data.error);
+    }
+    todayLog = { inTime: time, outTime: "" };
+    renderActionScreen();
+    showAlert("action-alert", "✓ Clocked in at " + time, "ok");
+  } catch(e) { showAlert("action-alert", "Error: " + e.message, "err"); }
+  setLoading("btn-in", false);
+}
+
+// Clock Out
+async function doClockOut() {
+  setLoading("btn-out", true);
+  try {
+    const now = new Date(), time = formatTime(now), date = getTodayStr();
+    const data = await fetch(SCRIPT_URL + "?action=clockOut&name=" + encodeURIComponent(selectedStaff.name) + "&date=" + encodeURIComponent(date) + "&time=" + encodeURIComponent(time)).then(r => r.json());
+    if (!data.success) {
+      if (data.error === "ALREADY_CLOCKED_OUT") { await loadActionScreen(); return; }
+      if (data.error === "NOT_CLOCKED_IN") { showAlert("action-alert", "You haven't clocked in today.", "err"); setLoading("btn-out", false); return; }
+      throw new Error(data.error);
+    }
+    todayLog = { inTime: todayLog.inTime, outTime: time };
+    renderActionScreen();
+    showAlert("action-alert", "✓ Clocked out at " + time, "ok");
+  } catch(e) { showAlert("action-alert", "Error: " + e.message, "err"); }
+  setLoading("btn-out", false);
+}
+
+// Helpers
+function showAlert(id, msg, type) { const el = document.getElementById(id); el.textContent = msg; el.className = "alert alert-" + type; el.classList.remove("hidden"); }
+function clearAlert(id) { const el = document.getElementById(id); el.classList.add("hidden"); el.textContent = ""; }
+function setLoading(btnId, on) {
+  const btn = document.getElementById(btnId); btn.disabled = on;
+  btn.innerHTML = on ? '<span class="spinner"></span> Please wait...' : (btnId === "btn-in" ? "🟢 Clock In" : "🔴 Clock Out");
+}
+
+init();
+</script>
+</body>
+</html>
